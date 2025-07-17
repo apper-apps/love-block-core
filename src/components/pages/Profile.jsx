@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
+import ProfileSetup from "@/components/organisms/ProfileSetup";
+import Discover from "@/components/pages/Discover";
+import Simulation from "@/components/pages/Simulation";
+import CompatibilityMeter from "@/components/molecules/CompatibilityMeter";
 import Card from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
-import ProfileSetup from "@/components/organisms/ProfileSetup";
-import CompatibilityMeter from "@/components/molecules/CompatibilityMeter";
-import ApperIcon from "@/components/ApperIcon";
-import Loading from "@/components/ui/Loading";
 import { userService } from "@/services/api/userService";
 
 const Profile = () => {
@@ -15,37 +17,62 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   
+  const isValidImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    try {
+      new URL(url);
+      return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+    } catch {
+      return false;
+    }
+  };
+  
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+  
+  const handleImageError = () => {
+    console.warn('Failed to load profile image:', profile?.photo);
+    setImageError(true);
+    setImageLoading(false);
+  };
+
   const loadProfile = async () => {
     try {
       setLoading(true);
       const data = await userService.getCurrentUser();
-      setProfile(data);
-    } catch (err) {
-      // No profile exists, show setup
+      
+      if (data) {
+        setProfile(data);
+        if (!isValidImageUrl(data.photo)) {
+          setImageError(true);
+          setImageLoading(false);
+        } else {
+          setImageError(false);
+          setImageLoading(true);
+        }
+      } else {
+        setProfile(null);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      toast.error('Failed to load profile');
       setProfile(null);
     } finally {
       setLoading(false);
     }
   };
-  
+
+  const handleProfileComplete = (newProfile) => {
+    setProfile(newProfile);
+    toast.success('Profile created successfully!');
+  };
+
   useEffect(() => {
     loadProfile();
   }, []);
-  
-  const handleProfileComplete = async (profileData) => {
-    try {
-      const savedProfile = await userService.createProfile(profileData);
-      setProfile(savedProfile);
-      toast.success("Profile created successfully!");
-    } catch (err) {
-      toast.error("Failed to create profile");
-    }
-  };
-  
-  const handleImageError = () => {
-    setImageError(true);
-  };
   
   if (loading) {
     return (
@@ -114,16 +141,25 @@ const Profile = () => {
             <Card className="p-6">
               <div className="flex items-start space-x-6">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-100 to-accent-100 overflow-hidden">
+<div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-100 to-accent-100 overflow-hidden">
                     {!imageError ? (
-                      <img
-                        src={profile.photo}
-                        alt={profile.name}
-                        className="w-full h-full object-cover"
-                        onError={handleImageError}
-                      />
+                      <>
+                        {imageLoading && (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100 animate-pulse">
+                            <div className="w-8 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+                          </div>
+                        )}
+                        <img
+                          src={profile.photo}
+                          alt={profile.name}
+                          className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+                          onLoad={handleImageLoad}
+                          onError={handleImageError}
+                          loading="lazy"
+                        />
+                      </>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center bg-gray-50">
                         <ApperIcon name="User" className="w-12 h-12 text-primary-400" />
                       </div>
                     )}
