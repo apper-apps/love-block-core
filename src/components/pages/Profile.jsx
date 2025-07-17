@@ -172,10 +172,10 @@ const Profile = () => {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h2 className="text-2xl font-display font-bold text-gray-800">
-                      {profile.name}
+{profile.Name || profile.name}
                     </h2>
                     <Badge variant="secondary" size="md">
-                      {profile.mbtiType}
+                      {profile.mbti_type || profile.mbtiType}
                     </Badge>
                   </div>
                   
@@ -187,11 +187,11 @@ const Profile = () => {
                     {profile.bio}
                   </p>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {profile.loveLanguages.map((language, index) => (
+<div className="flex flex-wrap gap-2">
+                    {(profile.love_languages || profile.loveLanguages || '').split(',').filter(Boolean).map((language, index) => (
                       <Badge key={index} variant="primary" size="sm">
                         <ApperIcon name="Heart" className="w-3 h-3 mr-1" />
-                        {language}
+                        {language.trim()}
                       </Badge>
                     ))}
                   </div>

@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import React, { useState } from "react";
+import ApperIcon from "@/components/ApperIcon";
+import MBTISelector from "@/components/molecules/MBTISelector";
+import FormField from "@/components/molecules/FormField";
+import LoveLanguageCard from "@/components/molecules/LoveLanguageCard";
 import Card from "@/components/atoms/Card";
 import Button from "@/components/atoms/Button";
-import FormField from "@/components/molecules/FormField";
-import MBTISelector from "@/components/molecules/MBTISelector";
-import LoveLanguageCard from "@/components/molecules/LoveLanguageCard";
-import ApperIcon from "@/components/ApperIcon";
+import { userService } from "@/services/api/userService";
 
 const ProfileSetup = ({ onProfileComplete }) => {
   const [step, setStep] = useState(1);
@@ -53,15 +54,22 @@ const ProfileSetup = ({ onProfileComplete }) => {
     });
   };
   
-  const handleNext = () => {
+const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      onProfileComplete({
-        ...profile,
-        Id: Date.now(),
-        photo: `https://ui-avatars.com/api/?name=${profile.name}&background=e91e63&color=fff&size=400`
-      });
+      try {
+        const newProfile = await userService.createProfile({
+          ...profile,
+          photo: `https://ui-avatars.com/api/?name=${profile.name}&background=e91e63&color=fff&size=400`
+        });
+        
+        if (newProfile) {
+          onProfileComplete(newProfile);
+        }
+      } catch (error) {
+        console.error('Failed to create profile:', error);
+      }
     }
   };
   
